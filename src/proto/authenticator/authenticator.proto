@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package authenticator;
+
+// The greeting service definition.
+service Authenticator {
+  // Sends a greeting
+  rpc authenticate (AuthenticatorRequest) returns (AuthenticatorResponse);
+}
+
+// Bearer token
+message AuthenticatorRequest {
+  string header = 1;
+}
+
+// The response message containing the greetings
+message AuthenticatorResponse {
+  string message = 1;
+  string name = 2;
+  string iat = 3;
+  string _id = 4;
+}
+
+// build typescript definitions using ./scripts/protoc.sh
