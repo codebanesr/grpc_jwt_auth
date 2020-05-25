@@ -11,6 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const authenticator_pb_1 = require("../proto/authenticator/authenticator_pb");
 const authenticator_grpc_pb_1 = require("../proto/authenticator/authenticator_grpc_pb");
+const jsonwebtoken_1 = require("jsonwebtoken");
 class AuthenticatorHandler {
     constructor() {
         /**
@@ -20,18 +21,20 @@ class AuthenticatorHandler {
          */
         this.authenticate = (call, callback) => __awaiter(this, void 0, void 0, function* () {
             const reply = new authenticator_pb_1.AuthenticatorResponse();
-            console.log(call);
-            reply.setMessage("yo this is some message for you");
-            reply.setId("12345");
-            reply.setIat("IAT123");
-            reply.setName("shanur");
+            const token = call.metadata.get("authorization")[0].split(" ")[1];
+            const decoded = yield decode(token);
+            reply.setMessage(decoded.message);
+            reply.setId(decoded._id);
+            reply.setIat(decoded.iat.toString());
+            reply.setName(decoded.name);
             callback(null, reply);
         });
-        this.decode = (token) => __awaiter(this, void 0, void 0, function* () {
-            var decoded = jwt.verify(token, 'shhhhh');
-            console.log(decoded);
-        });
     }
+}
+function decode(token) {
+    const decoded = jsonwebtoken_1.verify(token, "supersecretkey");
+    console.log(decoded);
+    return decoded;
 }
 exports.default = {
     service: authenticator_grpc_pb_1.AuthenticatorService,

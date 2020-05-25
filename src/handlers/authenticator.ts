@@ -8,19 +8,25 @@ import {verify} from "jsonwebtoken"
 
 class AuthenticatorHandler implements IAuthenticatorServer {
     /**
-     * Greet the user nicely
      * @param call
      * @param callback
      */
     authenticate = async(call: grpc.ServerUnaryCall<AuthenticatorRequest>, callback: grpc.sendUnaryData<AuthenticatorResponse>): Promise<void> => {
         const reply: AuthenticatorResponse = new AuthenticatorResponse();
-        const decoded = await decode('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJtZXNzYWdlIjoiMTIzNDU2Nzg5MCIsIl9pZCI6IjEyMzQ1IiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.Rw4pKrJxcLfXIhcdjpkDpm6L5pV5PyVRI50IaVBn-bk');
 
-        reply.setMessage(decoded.message);
-        reply.setId(decoded._id);
-        reply.setIat(decoded.iat.toString());
-        reply.setName(decoded.name);
+        const token = (call.metadata.get("authorization")[0] as string).split(" ")[1];
 
+        let decoded = {} as IDecoded;
+        try {
+            decoded = await decode(token);
+            reply.setMessage(decoded.message);
+            reply.setId(decoded._id);
+            reply.setIat(decoded.iat.toString());
+            reply.setName(decoded.name);
+        }catch(e) {
+            console.log(e)
+            callback(e, reply);
+        }
         callback(null, reply);
     };
 }
@@ -32,10 +38,13 @@ interface IDecoded {
     iat: string,
     _id: string
 }
+
 function decode(token: string) {
-    const decoded:IDecoded = verify(token, "supersecretkey");
+    const decoded:IDecoded = verify(token, "supersecretkey") as IDecoded;
     return decoded;
 }
+
+
 export default {
     service: AuthenticatorService,                // Service interface
     handler: new AuthenticatorHandler(),          // Service interface definitions
